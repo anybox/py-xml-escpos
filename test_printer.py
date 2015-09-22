@@ -14,7 +14,7 @@ test_temp = """
         <barcode encoding='ean13'>
             5449000000996
         </barcode>
-        <cashdraw /> 
+        <cashdraw />
         <cut />
     </receipt>
 """
@@ -23,16 +23,16 @@ from xmlescpos.printer import Usb
 import usb
 import pprint
 import sys
+import logging
 
 pp = pprint.PrettyPrinter(indent=4)
-
 try:
     printer = Usb(0x04b8,0x0202)
 
     printer._raw('\x1D\x28\x47\x02\x00\x30\x04');
     printer._raw('AAAA');
     printer._raw('\x0c');
-    
+
     printer._raw('\x1c\x61\x31');
     printer._raw('BBBB');
     printer._raw('\x0c');
@@ -45,15 +45,13 @@ try:
 
     #printer.receipt(test_temp)
     pp.pprint(printer.get_printer_status())
-
-except NoDeviceError as e:
-    print "No device found %s" %str(e)
-except HandleDeviceError as e:
-    print "Impossible to handle the device due to previous error %s" % str(e)
-except TicketNotPrinted as e:
-    print "The ticket does not seems to have been fully printed %s" % str(e)
-except NoStatusError as e:
-    print "Impossible to get the status of the printer %s" % str(e)
-finally:
     printer.close()
 
+except NoDeviceError as e:
+    logging.error("No device found %s", str(e))
+except HandleDeviceError as e:
+    logging.error("Impossible to handle the device due to previous error %s", str(e))
+except TicketNotPrinted as e:
+    logging.error("The ticket does not seems to have been fully printed %s", str(e))
+except NoStatusError as e:
+    logging.error("Impossible to get the status of the printer %s", str(e))

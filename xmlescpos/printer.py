@@ -5,10 +5,13 @@ import usb.util
 import serial
 import socket
 
-from escpos import *
-from constants import *
-from exceptions import *
+from .escpos import *
+from .constants import *
+from .exceptions import *
 from time import sleep
+
+import logging
+
 
 class Usb(Escpos):
     """ Define USB printer """
@@ -30,16 +33,16 @@ class Usb(Escpos):
         self.in_ep     = in_ep
         self.out_ep    = out_ep
         self.open()
-    
+
     def open(self):
         """ Search device on USB tree and set is as escpos device """
-        
+
         self.device = usb.core.find(idVendor=self.idVendor, idProduct=self.idProduct)
         if self.device is None:
             raise NoDeviceError()
         try:
             if self.device.is_kernel_driver_active(self.interface):
-                self.device.detach_kernel_driver(self.interface) 
+                self.device.detach_kernel_driver(self.interface)
             self.device.set_configuration()
             usb.util.claim_interface(self.device, self.interface)
         except usb.core.USBError as e:
@@ -60,7 +63,7 @@ class Usb(Escpos):
                 i += 1
                 if i > 100:
                     return False
-        
+
             sleep(0.1)
 
     def _raw(self, msg):
@@ -68,11 +71,11 @@ class Usb(Escpos):
         if len(msg) != self.device.write(self.out_ep, msg, self.interface):
             self.device.write(self.out_ep, self.errorText, self.interface)
             raise TicketNotPrinted()
-    
+
     def __extract_status(self):
         maxiterate = 0
         rep = None
-        while rep == None:
+        while rep is None:
             maxiterate += 1
             if maxiterate > 10000:
                 raise NoStatusError()
@@ -83,21 +86,21 @@ class Usb(Escpos):
 
     def get_printer_status(self):
         status = {
-            'printer': {}, 
-            'offline': {}, 
-            'error'  : {}, 
-            'paper'  : {},
+            'printer': {},
+            'offline': {},
+            'error': {},
+            'paper': {},
         }
 
         self.device.write(self.out_ep, DLE_EOT_PRINTER, self.interface)
-        printer = self.__extract_status()    
+        printer = self.__extract_status()
         self.device.write(self.out_ep, DLE_EOT_OFFLINE, self.interface)
         offline = self.__extract_status()
         self.device.write(self.out_ep, DLE_EOT_ERROR, self.interface)
         error = self.__extract_status()
         self.device.write(self.out_ep, DLE_EOT_PAPER, self.interface)
         paper = self.__extract_status()
-            
+
         status['printer']['status_code']     = printer
         status['printer']['status_error']    = not ((printer & 147) == 18)
         status['printer']['online']          = not bool(printer & 8)
@@ -153,10 +156,9 @@ class Serial(Escpos):
         self.device = serial.Serial(port=self.devfile, baudrate=self.baudrate, bytesize=self.bytesize, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=self.timeout, dsrdtr=True)
 
         if self.device is not None:
-            print "Serial printer enabled"
+            logging.info("Serial printer enabled")
         else:
-            print "Unable to open serial printer on: %s" % self.devfile
-
+            logging.error("Unable to open serial printer on: %s", self.devfile)
 
     def _raw(self, msg):
         """ Print any command sent in raw format """
@@ -189,8 +191,7 @@ class Network(Escpos):
         self.device.connect((self.host, self.port))
 
         if self.device is None:
-            print "Could not open socket for %s" % self.host
-
+            logging.error("Could not open socket for %s", self.host)
 
     def _raw(self, msg):
         self.device.send(msg)
