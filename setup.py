@@ -2,14 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages  # Always prefer setuptools over distutils
-from codecs import open  # To use a consistent encoding
 from os import path
 
 here = path.abspath(path.dirname(__file__))
-
-# Get the long description from the relevant file
-with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
-    long_description = f.read()
 
 setup(
     name='pyxmlescpos',
@@ -20,11 +15,10 @@ setup(
     version='0.1.0',
 
     description='Print XML-defined Receipts on ESC/POS Receipt Printers',
-    long_description=long_description,
-
+    long_description='',
     # The project's main homepage.
     url='https://github.com/fvdsn/py-xml-escpos',
-    download_url = 'https://github.com/fvdsn/py-xml-escpos/tarball/0.1.0',
+    download_url='https://github.com/fvdsn/py-xml-escpos/tarball/0.1.0',
 
     # Author details
     author='Frédéric van der Essen & Manuel F Martinez',
